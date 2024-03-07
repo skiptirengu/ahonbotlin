@@ -1,5 +1,6 @@
 package bo.mdia.ahonbotlin.registrar
 
+import bo.mdia.ahonbotlin.command.SlashCommand
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
@@ -14,8 +15,10 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.stereotype.Component
 
 @Component
-class GlobalCommandRegistrar(@Autowired private val discordRestClient: RestClient) :
-  ApplicationRunner, NoCoLogging {
+class GlobalCommandRegistrar(
+  @Autowired private val discordRestClient: RestClient,
+  @Autowired private val kommands: List<SlashCommand>,
+) : ApplicationRunner, NoCoLogging {
   companion object {
     private const val COMMANDS_PATH = "classpath:commands/**.jsonc"
   }
@@ -44,10 +47,14 @@ class GlobalCommandRegistrar(@Autowired private val discordRestClient: RestClien
 
     logger.info { "Registering ${commands.size} commands" }
 
+    if (commands.size == 1) {
+      return
+    }
+
     discordRestClient.applicationService
       .bulkOverwriteGlobalApplicationCommand(
         discordRestClient.applicationId.block()!!,
-        commands.toList(),
+        kommands.map { it.request() },
       )
       .subscribe()
   }
