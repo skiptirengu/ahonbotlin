@@ -1,0 +1,5 @@
+discord:
+  token: ${DISCORD_TOKEN}
+spring:
+  main:
+    web-application-type: none
