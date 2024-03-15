@@ -19,15 +19,21 @@ java { sourceCompatibility = JavaVersion.VERSION_21 }
 
 repositories { mavenCentral() }
 
+val kordVersion = "0.13.1"
+
 dependencies {
-  implementation("io.klogging:klogging-spring-boot-starter:0.5.11")
+  implementation("org.springframework.boot:spring-boot-starter-data-jpa") {
+    exclude(group = "ch.qos.logback")
+  }
   implementation("org.springframework.boot:spring-boot-starter") {
     exclude(group = "ch.qos.logback")
   }
 
+  implementation("io.klogging:klogging-spring-boot-starter:0.5.11")
   implementation("com.discord4j:discord4j-core:3.2.6")
-  // implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+  implementation("com.h2database:h2")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 }
 
 // Dev dependencies

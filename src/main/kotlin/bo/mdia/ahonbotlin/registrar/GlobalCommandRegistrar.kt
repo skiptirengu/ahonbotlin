@@ -8,6 +8,9 @@ import discord4j.common.JacksonResources
 import discord4j.discordjson.json.ApplicationCommandRequest
 import discord4j.rest.RestClient
 import io.klogging.NoCoLogging
+import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitLast
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -16,7 +19,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class GlobalCommandRegistrar(
-  @Autowired private val discordRestClient: RestClient,
+  @Autowired private val discordRest: RestClient,
   @Autowired private val kommands: List<SlashCommand>,
 ) : ApplicationRunner, NoCoLogging {
   companion object {
@@ -45,17 +48,38 @@ class GlobalCommandRegistrar(
         }
       }
 
-    logger.info { "Registering ${commands.size} commands" }
+    logger.info { "JSON commands ${commands.size}" }
+    logger.info { "Registering ${kommands.size} commands" }
 
-    if (commands.size == 1) {
-      return
+    runBlocking {
+      val appId = discordRest.applicationId.awaitLast()
+      val applicationCommand =
+        discordRest.applicationService
+          .getGlobalApplicationCommands(appId)
+          .buffer()
+          .awaitFirstOrNull()
+
+      logger.info { "Command id ${applicationCommand?.size}" }
+
+      /*
+      applicationCommand?.forEach {
+        discordRest.applicationService
+          .deleteGlobalApplicationCommand(appId, it.id().asLong())
+          .awaitFirstOrNull()
+      }
+      */
+
+      discordRest.applicationService
+        .bulkOverwriteGlobalApplicationCommand(appId, kommands.map { it.definition() })
+        .awaitFirstOrNull()
+
+      /*
+      kommands.forEach {
+        discordRest.applicationService
+          .createGlobalApplicationCommand(appId, it.definition())
+          .awaitFirstOrNull()
+      }
+      */
     }
-
-    discordRestClient.applicationService
-      .bulkOverwriteGlobalApplicationCommand(
-        discordRestClient.applicationId.block()!!,
-        kommands.map { it.request() },
-      )
-      .subscribe()
   }
 }

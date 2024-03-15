@@ -4,13 +4,15 @@ import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 import discord4j.core.`object`.command.ApplicationCommandOption
 import discord4j.discordjson.json.ApplicationCommandOptionData
 import discord4j.discordjson.json.ApplicationCommandRequest
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.stereotype.Component
-import reactor.core.publisher.Mono
 
 @Component
-class AvatarCommand(override val name: String = "avatar") : SlashCommand {
+class AvatarCommand : SlashCommand {
+  override val name: String = "avatar"
 
-  override fun request() =
+  override fun definition() =
     ApplicationCommandRequest.builder()
       .name(name)
       .description("Get a user's avatar")
@@ -24,16 +26,14 @@ class AvatarCommand(override val name: String = "avatar") : SlashCommand {
       )
       .build()
 
-  override fun handle(event: ChatInputInteractionEvent): Mono<Void> {
-    return event
+  override suspend fun handle(event: ChatInputInteractionEvent) {
+    event
       .reply()
       .withContent(
-        event
-          .getOption("user")
-          .flatMap { it.value }
-          .map { "${it.asUser().block()!!.avatarUrl}?size=256" }
-          .get()
+        "${event.getOption("user").get().value.get().asUser().awaitSingle().avatarUrl}?size=256"
       )
       .withEphemeral(false)
+      .doOnError { error("Error sending avatar: $it") }
+      .awaitSingleOrNull()
   }
 }

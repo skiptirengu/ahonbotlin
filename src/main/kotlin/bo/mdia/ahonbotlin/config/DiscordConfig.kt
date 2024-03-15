@@ -10,9 +10,12 @@ import org.springframework.context.annotation.Configuration
 class DiscordConfig {
   @Value("\${discord.token}") lateinit var token: String
 
-  @Bean
+  @Bean(name = ["discordGateway"])
   fun gatewayDiscordClient(): GatewayDiscordClient =
     DiscordClientBuilder.create(token).build().gateway().login().block()!!
 
-  @Bean fun discordRestClient(gatewayDiscordClient: GatewayDiscordClient) = gatewayDiscordClient.rest()
+  // @Bean fun kordClient() = runBlocking { Kord(token) }
+
+  @Bean(name = ["discordRest"])
+  fun discordRestClient(gatewayDiscordClient: GatewayDiscordClient) = gatewayDiscordClient.rest()
 }

@@ -3,3 +3,8 @@ discord:
 spring:
   main:
     web-application-type: none
+  datasource:
+    username: sa
+    password:
+    url: jdbc:h2:mem:ahonbotlin
+    driverClassName: org.h2.Driver
